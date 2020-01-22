@@ -1,0 +1,8 @@
+This is the API documentation for the [[https://alexandru.github.io/my-typelevel-library/ My Typelevel Library]] library.
+
+An awesome public FP library.
+
+Links:
+
+- [[https://alexandru.github.io/my-typelevel-library/ Homepage]]
+- [[https://github.com/alexandru/my-typelevel-library GitHub repository]]
