@@ -12,6 +12,13 @@ The packages are published on Maven Central.
 libraryDependencies += "org.alexn" %% "my-typelevel-library-core" % "<version>"
 ```
 
+### Documentation
+
+Links:
+
+- [Website](https://alexandru.github.io/my-typelevel-library/)
+- [API documentation](https://alexandru.github.io/my-typelevel-library//api/)
+
 ## Contributing
 
 The My Typelevel Library project welcomes contributions from anybody wishing to participate.  All code or documentation that is provided must be licensed with the same license that My Typelevel Library is licensed with (Apache 2.0, see LICENSE.txt).
