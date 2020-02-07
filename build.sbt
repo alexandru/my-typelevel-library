@@ -1,8 +1,8 @@
-// shadow sbt-scalajs' crossProject and CrossType from Scala.js 0.6.x
+import BuildKeys._
+import Boilerplate._
+
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
-// For getting Scoverage out of the generated POM
-import scala.xml.Elem
-import scala.xml.transform.{RewriteRule, RuleTransformer}
+import sbtcrossproject.CrossProject
 
 // ---------------------------------------------------------------------------
 // Commands
@@ -13,64 +13,45 @@ addCommandAlias("ci", ";project root ;reload ;+clean ;+test:compile ;+test ;+pac
 // ---------------------------------------------------------------------------
 // Dependencies
 
-/**
-  * Standard FP library for Scala:
+/** Standard FP library for Scala:
   * [[https://typelevel.org/cats/]]
   */
 val CatsVersion = "2.1.0"
-/**
-  * FP library for describing side-effects:
+
+/** FP library for describing side-effects:
   * [[https://typelevel.org/cats-effect/]]
   */
 val CatsEffectVersion = "2.0.0"
-/**
-  * Library for unit-testing:
+
+/** Library for unit-testing:
   * [[https://github.com/monix/minitest/]]
   */
 val MinitestVersion = "2.7.0"
-/**
-  * Library for property-based testing:
+
+/** Library for property-based testing:
   * [[https://www.scalacheck.org/]]
   */
 val ScalaCheckVersion = "1.14.1"
-/**
-  * Compiler plugin for working with partially applied types:
+
+/** Compiler plugin for working with partially applied types:
   * [[https://github.com/typelevel/kind-projector]]
   */
 val KindProjectorVersion = "0.11.0"
-/**
-  * Compiler plugin for fixing "for comprehensions" to do desugaring w/o `withFilter`:
+
+/** Compiler plugin for fixing "for comprehensions" to do desugaring w/o `withFilter`:
   * [[https://github.com/typelevel/kind-projector]]
   */
 val BetterMonadicForVersion = "0.3.1"
-/**
-  * Compiler plugin for silencing compiler warnings:
+
+/** Compiler plugin for silencing compiler warnings:
   * [[https://github.com/ghik/silencer]]
   */
 val SilencerVersion = "1.4.4"
 
-/** For parsing git tags for determining version number. */
-val ReleaseTag = """^v(\d+\.\d+(?:\.\d+(?:[-.]\w+)?)?)$""".r
-
 /**
-  * For specifying the project's repository ID.
-  *
-  * Examples:
-  *
-  *  - typelevel/cats
-  *  - typelevel/cats-effect
-  *  - monix/monix
+  * Defines common plugins between all projects.
   */
-lazy val gitHubRepositoryID =
-  settingKey[String]("GitHub repository ID (e.g. user_id/project_name)")
-
-/**
-  * Folder where the API docs will be uploaded when generating site.
-  */
-lazy val docsMappingsAPIDir =
-  settingKey[String]("Name of subdirectory in site target directory for api docs")
-
-def profile: Project ⇒ Project = pr => {
+def defaultPlugins: Project ⇒ Project = pr => {
   val withCoverage = sys.env.getOrElse("SBT_PROFILE", "") match {
     case "coverage" => pr
     case _ => pr.disablePlugins(scoverage.ScoverageSbtPlugin)
@@ -80,98 +61,13 @@ def profile: Project ⇒ Project = pr => {
     .enablePlugins(GitBranchPrompt)
 }
 
-def scalaPartV = Def setting (CrossVersion partialVersion scalaVersion.value)
-lazy val crossVersionSharedSources: Seq[Setting[_]] =
-  Seq(Compile, Test).map { sc =>
-    (unmanagedSourceDirectories in sc) ++= {
-      (unmanagedSourceDirectories in sc).value.flatMap { dir =>
-        Seq(
-          scalaPartV.value match {
-            case Some((2, y)) if y == 11 => new File(dir.getPath + "_2.11")
-            case Some((2, y)) if y == 12 => new File(dir.getPath + "_2.12")
-            case Some((2, y)) if y >= 13 => new File(dir.getPath + "_2.13")
-          },
-
-          scalaPartV.value match {
-            case Some((2, n)) if n >= 12 => new File(dir.getPath + "_2.12+")
-            case _                       => new File(dir.getPath + "_2.12-")
-          },
-
-          scalaPartV.value match {
-            case Some((2, n)) if n >= 13 => new File(dir.getPath + "_2.13+")
-            case _                       => new File(dir.getPath + "_2.13-")
-          },
-        )
-      }
-    }
-  }
-
-lazy val coverageSettings = Seq(
-  // For evicting Scoverage out of the generated POM
-  // See: https://github.com/scoverage/sbt-scoverage/issues/153
-  pomPostProcess := { (node: xml.Node) =>
-    new RuleTransformer(new RewriteRule {
-      override def transform(node: xml.Node): Seq[xml.Node] = node match {
-        case e: Elem
-          if e.label == "dependency" && e.child.exists(child => child.label == "groupId" && child.text == "org.scoverage") => Nil
-        case _ => Seq(node)
-      }
-    }).transform(node).head
-  },
-)
-
-lazy val doNotPublishArtifact = Seq(
-  skip in publish := true,
-  publish := (()),
-  publishLocal := (()),
-  publishArtifact := false,
-  publishTo := None
-)
-
-lazy val sharedJSSettings = Seq(
-  coverageExcludedFiles := ".*",
-  // Use globally accessible (rather than local) source paths in JS source maps
-  scalacOptions += {
-    val tagOrHash = {
-      val ver = s"v${version.value}"
-      if (isSnapshot.value)
-        git.gitHeadCommit.value.getOrElse(ver)
-      else
-        ver
-    }
-    val l = (baseDirectory in LocalRootProject).value.toURI.toString
-    val g = s"https://raw.githubusercontent.com/${gitHubRepositoryID.value}/$tagOrHash/"
-    s"-P:scalajs:mapSourceURI:$l->$g"
-  }
-)
-
-lazy val unidocSettings = Seq(
-  // Only include JVM sub-projects, exclude JS or Native sub-projects
-  unidocProjectFilter in (ScalaUnidoc, unidoc) :=
-    inProjects(coreJVM),
-
-  scalacOptions in (ScalaUnidoc, unidoc) +=
-    "-Xfatal-warnings",
-  scalacOptions in (ScalaUnidoc, unidoc) --=
-    Seq("-Ywarn-unused-import", "-Ywarn-unused:imports"),
-  scalacOptions in (ScalaUnidoc, unidoc) ++=
-    Opts.doc.title(s"My Typelevel Library"),
-  scalacOptions in (ScalaUnidoc, unidoc) ++=
-    Opts.doc.sourceUrl(s"https://github.com/alexandru/my-typelevel-library/tree/v${version.value}€{FILE_PATH}.scala"),
-  scalacOptions in (ScalaUnidoc, unidoc) ++=
-    Seq("-doc-root-content", file("rootdoc.txt").getAbsolutePath),
-  scalacOptions in (ScalaUnidoc, unidoc) ++=
-    Opts.doc.version(s"${version.value}")
-)
-
-lazy val doctestTestSettings = Seq(
-  doctestTestFramework := DoctestTestFramework.Minitest,
-  doctestIgnoreRegex := Some(s".*(internal).*"),
-  doctestOnlyCodeBlocksMode := true
-)
-
 lazy val sharedSettings = Seq(
-  gitHubRepositoryID := "alexandru/my-typelevel-library",
+  projectTitle := "My Typelevel Library",
+  projectWebsiteRootURL := "https://alexandru.github.io/",
+  projectWebsiteBasePath := "/my-typelevel-library/",
+  githubOwnerID := "alexandru",
+  githubRelativeRepositoryID := "my-typelevel-library",
+
   organization := "org.alexn",
   scalaVersion := "2.13.1",
   crossScalaVersions := Seq("2.12.10", "2.13.1"),
@@ -232,28 +128,28 @@ lazy val sharedSettings = Seq(
   pomIncludeRepository := { _ => false }, // removes optional dependencies
 
   licenses := Seq("APL2" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-  homepage := Some(url(s"https://alexandru.github.io/my-typelevel-library/")),
+  homepage := Some(url(projectWebsiteFullURL.value)),
   headerLicense := Some(HeaderLicense.Custom(
-    """|Copyright (c) 2020 the My Typelevel Library contributors.
-       |See the project homepage at: https://alexandru.github.io/my-typelevel-library/
-       |
-       |Licensed under the Apache License, Version 2.0 (the "License");
-       |you may not use this file except in compliance with the License.
-       |You may obtain a copy of the License at
-       |
-       |    http://www.apache.org/licenses/LICENSE-2.0
-       |
-       |Unless required by applicable law or agreed to in writing, software
-       |distributed under the License is distributed on an "AS IS" BASIS,
-       |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-       |See the License for the specific language governing permissions and
-       |limitations under the License."""
-    .stripMargin)),
+    s"""|Copyright (c) 2020 the ${projectTitle.value} contributors.
+        |See the project homepage at: ${projectWebsiteFullURL.value}
+        |
+        |Licensed under the Apache License, Version 2.0 (the "License");
+        |you may not use this file except in compliance with the License.
+        |You may obtain a copy of the License at
+        |
+        |    http://www.apache.org/licenses/LICENSE-2.0
+        |
+        |Unless required by applicable law or agreed to in writing, software
+        |distributed under the License is distributed on an "AS IS" BASIS,
+        |WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        |See the License for the specific language governing permissions and
+        |limitations under the License."""
+      .stripMargin)),
 
   scmInfo := Some(
     ScmInfo(
-      url(s"https://github.com/${gitHubRepositoryID.value}"),
-      s"scm:git@github.com:${gitHubRepositoryID.value}.git"
+      url(s"https://github.com/${githubFullRepositoryID.value}"),
+      s"scm:git@github.com:${githubFullRepositoryID.value}.git"
     )),
 
   developers := List(
@@ -268,13 +164,47 @@ lazy val sharedSettings = Seq(
   sonatypeProfileName := organization.value,
 )
 
- lazy val root = project.in(file("."))
+/**
+  * Shared configuration across all sub-projects with actual code to be published.
+  */
+def defaultCrossProjectConfiguration(pr: CrossProject) = {
+  val sharedJavascriptSettings = Seq(
+    coverageExcludedFiles := ".*",
+    // Use globally accessible (rather than local) source paths in JS source maps
+    scalacOptions += {
+      val tagOrHash = {
+        val ver = s"v${version.value}"
+        if (isSnapshot.value)
+          git.gitHeadCommit.value.getOrElse(ver)
+        else
+          ver
+      }
+      val l = (baseDirectory in LocalRootProject).value.toURI.toString
+      val g = s"https://raw.githubusercontent.com/${githubFullRepositoryID.value}/$tagOrHash/"
+      s"-P:scalajs:mapSourceURI:$l->$g"
+    }
+  )
+
+  val sharedJVMSettings = Seq(
+    skip.in(publish) := customScalaJSVersion.isDefined
+  )
+
+  pr.configure(defaultPlugins)
+    .settings(sharedSettings)
+    .jsSettings(sharedJavascriptSettings)
+    .jvmSettings(doctestTestSettings(DoctestTestFramework.Minitest))
+    .jvmSettings(sharedJVMSettings)
+    .settings(crossVersionSharedSources)
+    .settings(coverageSettings)
+}
+
+lazy val root = project.in(file("."))
   .enablePlugins(ScalaUnidocPlugin)
   .aggregate(coreJVM, coreJS)
-  .configure(profile)
+  .configure(defaultPlugins)
   .settings(sharedSettings)
   .settings(doNotPublishArtifact)
-  .settings(unidocSettings)
+  .settings(unidocSettings(coreJVM))
   .settings(
     // Try really hard to not execute tasks in parallel ffs
     Global / concurrentRestrictions := Tags.limitAll(1) :: Nil,
@@ -287,19 +217,19 @@ lazy val site = project.in(file("site"))
   .settings(sharedSettings)
   .settings(doNotPublishArtifact)
   .dependsOn(coreJVM)
-  .settings{
+  .settings {
     import microsites._
     Seq(
-      micrositeName := "My Typelevel Library",
+      micrositeName := projectTitle.value,
       micrositeDescription := "An awesome public FP library.",
       micrositeAuthor := "Alexandru Nedelcu",
       micrositeTwitterCreator := "@alexelcu",
-      micrositeGithubOwner := "alexandru",
-      micrositeGithubRepo := "my-typelevel-library",
-      micrositeUrl := "https://alexandru.github.io",
-      micrositeBaseUrl := "/my-typelevel-library/".replaceAll("[/]+$", ""),
-      micrositeDocumentationUrl := s"https://alexandru.github.io/my-typelevel-library/api/",
-      micrositeGitterChannelUrl := "alexandru/my-typelevel-library",
+      micrositeGithubOwner := githubOwnerID.value,
+      micrositeGithubRepo := githubRelativeRepositoryID.value,
+      micrositeUrl := projectWebsiteRootURL.value.replaceAll("[/]+$", ""),
+      micrositeBaseUrl := projectWebsiteBasePath.value.replaceAll("[/]+$", ""),
+      micrositeDocumentationUrl := s"${projectWebsiteFullURL.value}/${docsMappingsAPIDir.value}/",
+      micrositeGitterChannelUrl := githubFullRepositoryID.value,
       micrositeFooterText := None,
       micrositeHighlightTheme := "atom-one-light",
       micrositePalette := Map(
@@ -323,7 +253,7 @@ lazy val site = project.in(file("site"))
         file("LICENSE.md") -> ExtraMdFileConfig("LICENSE.md", "page", Map("title" -> "License",   "section" -> "license",   "position" -> "101"))
       ),
       docsMappingsAPIDir := s"api",
-      addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc) in myTypelevelLibrary, docsMappingsAPIDir),
+      addMappingsToSiteDir(mappings in (ScalaUnidoc, packageDoc) in root, docsMappingsAPIDir),
       sourceDirectory in Compile := baseDirectory.value / "src",
       sourceDirectory in Test := baseDirectory.value / "test",
       mdocIn := (sourceDirectory in Compile).value / "mdoc",
@@ -333,12 +263,7 @@ lazy val site = project.in(file("site"))
 lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("core"))
-  .configure(profile)
-  .settings(sharedSettings)
-  .settings(crossVersionSharedSources)
-  .settings(coverageSettings)
-  .jvmSettings(doctestTestSettings)
-  .jsSettings(sharedJSSettings)
+  .configureCross(defaultCrossProjectConfiguration)
   .settings(
     name := "my-typelevel-library-core",
     libraryDependencies ++= Seq(
