@@ -1,6 +1,6 @@
 # Contributing to My Typelevel Library
 
-The My Typelevel Library project welcomes contributions from anybody wishing to participate. All code or documentation that is provided must be licensed with the same license that My Typelevel Library is licensed with (Apache 2.0, see LICENSE.txt).
+The My Typelevel Library project welcomes contributions from anybody wishing to participate. All code or documentation that is provided must be licensed with the same license that My Typelevel Library is licensed with (Apache 2.0, see [LICENSE](./LICENSE.md)).
 
 ## Code of Conduct
 
