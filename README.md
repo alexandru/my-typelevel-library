@@ -17,7 +17,7 @@ libraryDependencies += "org.alexn" %% "my-typelevel-library-core" % "<version>"
 Links:
 
 - [Website](https://alexandru.github.io/my-typelevel-library/)
-- [API documentation](https://alexandru.github.io/my-typelevel-library//api/)
+- [API documentation](https://alexandru.github.io/my-typelevel-library/api/)
 
 ## Contributing
 
