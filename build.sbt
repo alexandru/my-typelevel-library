@@ -21,7 +21,22 @@ val CatsVersion = "2.1.0"
 /** FP library for describing side-effects:
   * [[https://typelevel.org/cats-effect/]]
   */
-val CatsEffectVersion = "2.0.0"
+val CatsEffectVersion = "2.1.1"
+
+/** Newtype (opaque type) definitions:
+  * [[https://github.com/estatico/scala-newtype]]
+  */
+val NewtypeVersion = "0.4.3"
+
+/** First-class support for type-classes:
+  * [[https://github.com/typelevel/simulacrum]]
+  */
+val SimulacrumVersion = "1.0.0"
+
+/** For macros that are supported on older Scala versions.
+  * Not needed starting with Scala 2.13.
+  */
+val MacroParadiseVersion = "2.1.0"
 
 /** Library for unit-testing:
   * [[https://github.com/monix/minitest/]]
@@ -195,7 +210,12 @@ def defaultCrossProjectConfiguration(pr: CrossProject) = {
     .jvmSettings(doctestTestSettings(DoctestTestFramework.Minitest))
     .jvmSettings(sharedJVMSettings)
     .settings(crossVersionSharedSources)
-    .settings(coverageSettings)
+    .settings(requiredMacroCompatDeps(MacroParadiseVersion))
+    .settings(filterOutMultipleDependenciesFromGeneratedPomXml(
+      "groupId" -> "org.scoverage".r :: Nil,
+      "groupId" -> "io.estatico".r   :: "artifactId" -> "newtype".r    :: Nil,
+      "groupId" -> "org.typelevel".r :: "artifactId" -> "simulacrum".r :: Nil,
+    ))
 }
 
 lazy val root = project.in(file("."))
@@ -272,6 +292,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "my-typelevel-library-core",
     libraryDependencies ++= Seq(
+      "io.estatico"    %%% "newtype"          % NewtypeVersion % Provided,
+      "org.typelevel"  %%% "simulacrum"       % SimulacrumVersion % Provided,
       "org.typelevel"  %%% "cats-core"        % CatsVersion,
       "org.typelevel"  %%% "cats-effect"      % CatsEffectVersion,
       // For testing
