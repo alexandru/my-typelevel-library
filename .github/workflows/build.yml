@@ -20,3 +20,4 @@ jobs:
       - name: Compile and test
         run: |
           sbt ci
+

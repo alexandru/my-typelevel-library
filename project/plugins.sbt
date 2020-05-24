@@ -1,5 +1,4 @@
-val ScalaJSVersion =
-  Option(System.getenv("SCALAJS_VERSION")).getOrElse("0.6.31")
+val ScalaJSVersion = Option(System.getenv("SCALAJS_VERSION")).getOrElse("1.0.1")
 
 addSbtPlugin("com.47deg"                 % "sbt-microsites"                % "1.1.0")
 addSbtPlugin("com.eed3si9n"              % "sbt-unidoc"                    % "0.4.2")
@@ -12,6 +11,6 @@ addSbtPlugin("org.portable-scala"        % "sbt-scala-native-crossproject" % "0.
 addSbtPlugin("org.portable-scala"        % "sbt-scalajs-crossproject"      % "0.6.1")
 addSbtPlugin("org.scala-js"              % "sbt-scalajs"                   % ScalaJSVersion)
 addSbtPlugin("org.scalameta"             % "sbt-mdoc"                      % "2.1.1")
-addSbtPlugin("org.scalameta"             % "sbt-scalafmt"                  % "2.3.0")
+addSbtPlugin("org.scalameta"             % "sbt-scalafmt"                  % "2.3.2")
 addSbtPlugin("org.scoverage"             % "sbt-scoverage"                 % "1.6.1")
 addSbtPlugin("pl.project13.scala"        % "sbt-jmh"                       % "0.3.7")

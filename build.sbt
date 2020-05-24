@@ -16,17 +16,12 @@ addCommandAlias("ci", ";project root ;reload ;+clean ;+test:compile ;+test ;+pac
 /** Standard FP library for Scala:
   * [[https://typelevel.org/cats/]]
   */
-val CatsVersion = "2.1.0"
+val CatsVersion = "2.1.1"
 
 /** FP library for describing side-effects:
   * [[https://typelevel.org/cats-effect/]]
   */
-val CatsEffectVersion = "2.1.1"
-
-/** Newtype (opaque type) definitions:
-  * [[https://github.com/estatico/scala-newtype]]
-  */
-val NewtypeVersion = "0.4.3"
+val CatsEffectVersion = "2.1.3"
 
 /** First-class support for type-classes:
   * [[https://github.com/typelevel/simulacrum]]
@@ -36,17 +31,19 @@ val SimulacrumVersion = "1.0.0"
 /** For macros that are supported on older Scala versions.
   * Not needed starting with Scala 2.13.
   */
-val MacroParadiseVersion = "2.1.0"
+val MacroParadiseVersion = "2.1.1"
 
 /** Library for unit-testing:
-  * [[https://github.com/monix/minitest/]]
+  *  - [[https://github.com/scalatest/scalatest]]
+  *  - [[https://github.com/scalatest/scalatestplus-scalacheck/]]
   */
-val MinitestVersion = "2.7.0"
+val ScalaTestVersion = "3.1.1"
+val ScalaTestPlusVersion = "3.1.1.1"
 
 /** Library for property-based testing:
   * [[https://www.scalacheck.org/]]
   */
-val ScalaCheckVersion = "1.14.1"
+val ScalaCheckVersion = "1.14.3"
 
 /** Compiler plugin for working with partially applied types:
   * [[https://github.com/typelevel/kind-projector]]
@@ -61,7 +58,7 @@ val BetterMonadicForVersion = "0.3.1"
 /** Compiler plugin for silencing compiler warnings:
   * [[https://github.com/ghik/silencer]]
   */
-val SilencerVersion = "1.4.4"
+val SilencerVersion = "1.6.0"
 
 /**
   * Defines common plugins between all projects.
@@ -84,8 +81,8 @@ lazy val sharedSettings = Seq(
   githubRelativeRepositoryID := "my-typelevel-library",
 
   organization := "org.alexn",
-  scalaVersion := "2.13.1",
-  crossScalaVersions := Seq("2.12.10", "2.13.1"),
+  scalaVersion := "2.13.2",
+  crossScalaVersions := Seq("2.12.11", "2.13.2"),
 
   // More version specific compiler options
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
@@ -126,15 +123,19 @@ lazy val sharedSettings = Seq(
   // ---------------------------------------------------------------------------
   // Options for testing
 
-  testFrameworks += new TestFramework("minitest.runner.Framework"),
   logBuffered in Test := false,
   logBuffered in IntegrationTest := false,
-  // Disables parallel execution
-  parallelExecution in Test := false,
-  parallelExecution in IntegrationTest := false,
-  testForkedParallel in Test := false,
-  testForkedParallel in IntegrationTest := false,
-  concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
+
+  /* Disables parallel execution
+   * ---------------------------
+   * Might be needed in case the tests use too many resources (CPU, memory)
+   * and the tests on top of CI end up failing because of that.
+   */
+  // parallelExecution in Test := false,
+  // parallelExecution in IntegrationTest := false,
+  // testForkedParallel in Test := false,
+  // testForkedParallel in IntegrationTest := false,
+  // concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
 
   // ---------------------------------------------------------------------------
   // Options meant for publishing on Maven Central
@@ -207,13 +208,12 @@ def defaultCrossProjectConfiguration(pr: CrossProject) = {
   pr.configure(defaultPlugins)
     .settings(sharedSettings)
     .jsSettings(sharedJavascriptSettings)
-    .jvmSettings(doctestTestSettings(DoctestTestFramework.Minitest))
+    //.jvmSettings(doctestTestSettings(DoctestTestFramework.ScalaTest))
     .jvmSettings(sharedJVMSettings)
     .settings(crossVersionSharedSources)
     .settings(requiredMacroCompatDeps(MacroParadiseVersion))
     .settings(filterOutMultipleDependenciesFromGeneratedPomXml(
       "groupId" -> "org.scoverage".r :: Nil,
-      "groupId" -> "io.estatico".r   :: "artifactId" -> "newtype".r    :: Nil,
       "groupId" -> "org.typelevel".r :: "artifactId" -> "simulacrum".r :: Nil,
     ))
 }
@@ -292,16 +292,15 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "my-typelevel-library-core",
     libraryDependencies ++= Seq(
-      "io.estatico"    %%% "newtype"          % NewtypeVersion % Provided,
       "org.typelevel"  %%% "simulacrum"       % SimulacrumVersion % Provided,
       "org.typelevel"  %%% "cats-core"        % CatsVersion,
       "org.typelevel"  %%% "cats-effect"      % CatsEffectVersion,
       // For testing
-      "io.monix"       %%% "minitest"         % MinitestVersion % Test,
-      "io.monix"       %%% "minitest-laws"    % MinitestVersion % Test,
-      "org.scalacheck" %%% "scalacheck"       % ScalaCheckVersion % Test,
-      "org.typelevel"  %%% "cats-laws"        % CatsVersion % Test,
-      "org.typelevel"  %%% "cats-effect-laws" % CatsEffectVersion % Test,
+      "org.scalatest"     %%% "scalatest"        % ScalaTestVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-14"  % ScalaTestPlusVersion % Test,
+      "org.scalacheck"    %%% "scalacheck"       % ScalaCheckVersion % Test,
+      "org.typelevel"     %%% "cats-laws"        % CatsVersion % Test,
+      "org.typelevel"     %%% "cats-effect-laws" % CatsEffectVersion % Test,
     ),
   )
 
