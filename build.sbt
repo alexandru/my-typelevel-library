@@ -37,8 +37,8 @@ val MacroParadiseVersion = "2.1.1"
   *  - [[https://github.com/scalatest/scalatest]]
   *  - [[https://github.com/scalatest/scalatestplus-scalacheck/]]
   */
-val ScalaTestVersion = "3.1.1"
-val ScalaTestPlusVersion = "3.1.1.1"
+val ScalaTestVersion = "3.1.2"
+val ScalaTestPlusVersion = "3.1.2.0"
 
 /** Library for property-based testing:
   * [[https://www.scalacheck.org/]]
@@ -58,7 +58,7 @@ val BetterMonadicForVersion = "0.3.1"
 /** Compiler plugin for silencing compiler warnings:
   * [[https://github.com/ghik/silencer]]
   */
-val SilencerVersion = "1.6.0"
+val SilencerVersion = "1.7.0"
 
 /**
   * Defines common plugins between all projects.
