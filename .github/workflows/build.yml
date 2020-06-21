@@ -11,7 +11,7 @@ env:
 
 jobs:
   jvm-tests:
-    name: JVM tests — scala-${{ matrix.scala }}, jdk-${{ matrix.java }}
+    name: JVM tests (scala-${{ matrix.scala }}, jdk-${{ matrix.java }})
     strategy:
       fail-fast: true      
       matrix:
@@ -28,7 +28,7 @@ jobs:
         with:
           java-version: "adopt@1.${{ matrix.java }}"
 
-      - name: Doc tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}
+      - name: sbt ++${{ matrix.scala }} ${{ matrix.command }}
         run: |
           ./.github/scripts/build.sh
         env:
@@ -36,7 +36,7 @@ jobs:
           SBT_COMMAND: ${{ matrix.command }}
 
   js-tests:
-    name: JS tests — scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }}
+    name: JS tests (scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }})
     strategy:
       fail-fast: true      
       matrix:
@@ -54,7 +54,7 @@ jobs:
         with:
           java-version: "adopt@1.${{ matrix.java }}"
 
-      - name: JS tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}, ScalaJS ${{ matrix.scalajs }}
+      - name: sbt ++${{ matrix.scala }} ${{ matrix.command }}
         run: |
           ./.github/scripts/build.sh
         env:
@@ -63,7 +63,7 @@ jobs:
           SBT_COMMAND: ${{ matrix.command }}
 
   package-tests:
-    name: Package tests — scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }}
+    name: Package tests (scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }})
     strategy:
       fail-fast: true      
       matrix:
@@ -81,7 +81,7 @@ jobs:
         with:
           java-version: "adopt@1.${{ matrix.java }}"
 
-      - name: Package tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}, ScalaJS ${{ matrix.scalajs }}
+      - name: sbt ++${{ matrix.scala }} ${{ matrix.command }}
         run: |
           ./.github/scripts/build.sh
         env:
@@ -90,7 +90,7 @@ jobs:
           SBT_COMMAND: ${{ matrix.command }}
 
   doc-tests:
-    name: Doc tests — scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }}
+    name: Doc tests (scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }})
     strategy:
       fail-fast: true
       matrix:
@@ -117,7 +117,7 @@ jobs:
         run: |
           bundle install --system --gemfile=site/Gemfile
 
-      - name: Doc tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}, ScalaJS ${{ matrix.scalajs }}
+      - name: sbt ++${{ matrix.scala }} ${{ matrix.command }}
         run: |
           ./.github/scripts/build.sh
         env:
