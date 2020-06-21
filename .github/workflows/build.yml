@@ -126,7 +126,7 @@ jobs:
   #-----------------------------------------------------------------------------------
   # Publishing tasks
   #-----------------------------------------------------------------------------------
-  
+
   publish_sonatype:
     name: Publish to Sonatype
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')

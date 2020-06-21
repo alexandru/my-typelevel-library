@@ -18,7 +18,6 @@
 package my.typelevel.library
 
 import cats.implicits._
-import org.scalacheck.Prop
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.Checkers
 
@@ -31,8 +30,8 @@ class ExampleSuite extends AnyFunSuite with Checkers {
 
   // Property-based testing via ScalaCheck
   test("sum up any list") {
-    Prop.forAll { (l: List[Int]) =>
-      Example.sumAll(l) == l.sum + 1
+    check { (l: List[Int]) =>
+      Example.sumAll(l) == l.sum
     }
   }
 }
