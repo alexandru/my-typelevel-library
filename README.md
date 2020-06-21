@@ -1,6 +1,6 @@
 # My Typelevel Library
 
-[![Build](https://github.com/alexandru/my-typelevel-library/workflows/build/badge.svg?branch=master)](https://github.com/alexandru/my-typelevel-library/actions?query=branch%3Amaster+workflow%3Abuild) [![Release](https://github.com/alexandru/my-typelevel-library/workflows/release/badge.svg)](https://github.com/alexandru/my-typelevel-library/actions?query=workflow%3Arelease) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.alexn/my-typelevel-library-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.alexn/my-typelevel-library-core_2.13)
+[![Build](https://github.com/alexandru/my-typelevel-library/workflows/build/badge.svg?branch=master)](https://github.com/alexandru/my-typelevel-library/actions?query=branch%3Amaster+workflow%3Abuild) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.alexn/my-typelevel-library-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.alexn/my-typelevel-library-core_2.13)
 
 An awesome public FP library.
 
