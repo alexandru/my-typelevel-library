@@ -7,8 +7,14 @@ import sbtcrossproject.CrossProject
 // ---------------------------------------------------------------------------
 // Commands
 
-addCommandAlias("release", ";+clean ;ci-release ;unidoc ;microsite/publishMicrosite")
-addCommandAlias("ci", ";project root ;reload ;+clean ;+test:compile ;+test ;+package ;unidoc ;site/makeMicrosite")
+/* We have no other way to target only JVM or JS projects in tests. */
+lazy val aggregatorIDs = Seq("core")
+
+addCommandAlias("ci-jvm",     ";" + aggregatorIDs.map(id => s"${id}JVM/clean ;${id}JVM/test:compile ;${id}JVM/test").mkString(";"))
+addCommandAlias("ci-js",      ";" + aggregatorIDs.map(id => s"${id}JS/clean ;${id}JS/test:compile ;${id}JS/test").mkString(";"))
+addCommandAlias("ci-package", ";+package ;unidoc ;site/makeMicrosite")
+addCommandAlias("ci",         ";project root ;reload ;+ci-jvm ;+ci-js ;ci-package")
+addCommandAlias("release",    ";+clean ;ci-release ;unidoc ;microsite/publishMicrosite")
 
 // ---------------------------------------------------------------------------
 // Dependencies
@@ -37,8 +43,8 @@ val MacroParadiseVersion = "2.1.1"
   *  - [[https://github.com/scalatest/scalatest]]
   *  - [[https://github.com/scalatest/scalatestplus-scalacheck/]]
   */
-val ScalaTestVersion = "3.1.2"
-val ScalaTestPlusVersion = "3.1.2.0"
+val ScalaTestVersion = "3.2.0"
+val ScalaTestPlusVersion = "3.2.0.0"
 
 /** Library for property-based testing:
   * [[https://www.scalacheck.org/]]
@@ -97,7 +103,7 @@ lazy val sharedSettings = Seq(
       )
   }),
 
-    // Turning off fatal warnings for doc generation
+  // Turning off fatal warnings for doc generation
   scalacOptions.in(Compile, doc) ~= filterConsoleScalacOptions,
   // Silence all warnings from src_managed files
   scalacOptions += "-P:silencer:pathFilters=.*[/]src_managed[/].*",
@@ -296,12 +302,12 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.typelevel"  %%% "cats-core"        % CatsVersion,
       "org.typelevel"  %%% "cats-effect"      % CatsEffectVersion,
       // For testing
-      "org.scalatest"     %%% "scalatest"        % ScalaTestVersion % Test,
-      "org.scalatestplus" %%% "scalacheck-1-14"  % ScalaTestPlusVersion % Test,
-      "org.scalacheck"    %%% "scalacheck"       % ScalaCheckVersion % Test,
-      "org.typelevel"     %%% "cats-laws"        % CatsVersion % Test,
-      "org.typelevel"     %%% "cats-effect-laws" % CatsEffectVersion % Test,
-    ),
+      "org.scalatest"     %%% "scalatest-funsuite" % ScalaTestVersion % Test,
+      "org.scalatestplus" %%% "scalacheck-1-14"    % ScalaTestPlusVersion % Test,
+      "org.scalacheck"    %%% "scalacheck"         % ScalaCheckVersion % Test,
+      "org.typelevel"     %%% "cats-laws"          % CatsVersion % Test,
+      "org.typelevel"     %%% "cats-effect-laws"   % CatsEffectVersion % Test,
+    )
   )
 
 lazy val coreJVM = core.jvm

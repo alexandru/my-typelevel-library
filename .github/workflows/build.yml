@@ -1,12 +1,74 @@
-name: build
-on: [push, pull_request]
+name: Continuous Integration
 
+on:
+  pull_request:
+    branches: ['*']
+  push:
+    branches: ['*']
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+caching: &caching
+  - name: Cache ivy2
+    uses: actions/cache@v1
+    with:
+      path: ~/.ivy2/cache
+      key: ${{ runner.os }}-sbt-ivy-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+  - name: Cache coursier (generic)
+    uses: actions/cache@v1
+    with:
+      path: ~/.coursier/cache/v1
+      key: ${{ runner.os }}-generic-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+  - name: Cache coursier (linux)
+    if: contains(runner.os, 'linux')
+    uses: actions/cache@v1
+    with:
+      path: ~/.cache/coursier/v1
+      key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+  - name: Cache coursier (macOS)
+    if: contains(runner.os, 'macos')
+    uses: actions/cache@v1
+    with:
+      path: ~/Library/Caches/Coursier/v1
+      key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+  - name: Cache coursier (windows)
+    if: contains(runner.os, 'windows')
+    uses: actions/cache@v1
+    with:
+      path: ~/AppData/Local/Coursier/Cache/v1
+      key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+  - name: Cache sbt
+    uses: actions/cache@v1
+    with:
+      path: ~/.sbt
+      key: ${{ runner.os }}-sbt-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}  
+  
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    name: Build and Test
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        java: [adopt@1.8, adopt@1.11]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout current branch (fast)
+        uses: actions/checkout@v2
+
+      - name: Setup Java and Scala
+        uses: olafurpg/setup-scala@v5
+        with:
+          java-version: ${{ matrix.java }}
+
+      - <<: *&caching
 
       - name: Set up Ruby 2.6 (for microsite)
         uses: actions/setup-ruby@v1
@@ -20,4 +82,3 @@ jobs:
       - name: Compile and test
         run: |
           sbt ci
-
