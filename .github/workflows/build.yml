@@ -11,12 +11,12 @@ env:
 
 jobs:
   jvm-tests:
-    name: scala-${{ matrix.scala }} jdk-${{ matrix.java }} tests
+    name: JVM tests — scala-${{ matrix.scala }}, jdk-${{ matrix.java }}
     strategy:
       fail-fast: true      
       matrix:
         os: [ubuntu-20.04]
-        java: [adopt@1.8, adopt@1.11]
+        java: [8, 11]
         scala: [2.12.11, 2.13.2]
         command: [ci-jvm]
 
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: olafurpg/setup-scala@v5
         with:
-          java-version: ${{ matrix.java }}
+          java-version: "adopt@1.${{ matrix.java }}"
 
       - name: Cache ivy2
         uses: actions/cache@v1
@@ -81,4 +81,79 @@ jobs:
           ./.github/scripts/build.sh
         env:
           SCALA_VERSION: ${{ matrix.scala }}
+          SBT_COMMAND: ${{ matrix.command }}
+
+  js-tests:
+    name: JS tests — scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }}
+    strategy:
+      fail-fast: true      
+      matrix:
+        os: [ubuntu-20.04]
+        java: [adopt@1.11]
+        scala: [2.12.11, 2.13.2]
+        scalajs: [0.6.33, 1.0.1]
+        command: [ci-js]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v5
+        with:
+          java-version: "adopt@1.${{ matrix.java }}"
+
+      - name: Cache ivy2
+        uses: actions/cache@v1
+        with:
+          path: ~/.ivy2/cache
+          key: ${{ runner.os }}-sbt-ivy-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Cache coursier (generic)
+        uses: actions/cache@v1
+        with:
+          path: ~/.coursier/cache/v1
+          key: ${{ runner.os }}-generic-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Cache coursier (linux)
+        if: contains(runner.os, 'linux')
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/coursier/v1
+          key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Cache coursier (macOS)
+        if: contains(runner.os, 'macos')
+        uses: actions/cache@v1
+        with:
+          path: ~/Library/Caches/Coursier/v1
+          key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Cache coursier (windows)
+        if: contains(runner.os, 'windows')
+        uses: actions/cache@v1
+        with:
+          path: ~/AppData/Local/Coursier/Cache/v1
+          key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+
+      - name: Cache sbt
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-cache-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}  
+      
+      # - name: Set up Ruby 2.6 (for microsite)
+      #   uses: actions/setup-ruby@v1
+      #   with:
+      #     ruby-version: 2.6.x
+
+      # - name: Install microsite dependencies
+      #   run: |
+      #     bundle install --system --gemfile=site/Gemfile
+
+      - name: Run Tests for Java ${{ matrix.java }}, Scala ${{ matrix.scala }}, ScalaJS ${{ matrix.scalajs }}
+        run: |
+          ./.github/scripts/build.sh
+        env:
+          SCALA_VERSION: ${{ matrix.scala }}
+          SCALAJS_VERSION: ${{ matrix.scalaJS }}
           SBT_COMMAND: ${{ matrix.command }}
