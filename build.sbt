@@ -12,8 +12,8 @@ lazy val aggregatorIDs = Seq("core")
 
 addCommandAlias("ci-jvm",     ";" + aggregatorIDs.map(id => s"${id}JVM/clean ;${id}JVM/test:compile ;${id}JVM/test").mkString(";"))
 addCommandAlias("ci-js",      ";" + aggregatorIDs.map(id => s"${id}JS/clean ;${id}JS/test:compile ;${id}JS/test").mkString(";"))
-addCommandAlias("ci-package", ";+package ;unidoc ;site/makeMicrosite")
-addCommandAlias("ci",         ";project root ;reload ;+ci-jvm ;+ci-js ;ci-package")
+addCommandAlias("ci-doc",     ";package ;unidoc ;site/makeMicrosite")
+addCommandAlias("ci",         ";project root ;reload ;+ci-jvm ;+ci-js ;+package ;ci-doc")
 addCommandAlias("release",    ";+clean ;ci-release ;unidoc ;microsite/publishMicrosite")
 
 // ---------------------------------------------------------------------------
