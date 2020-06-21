@@ -208,6 +208,8 @@ def defaultCrossProjectConfiguration(pr: CrossProject) = {
   )
 
   val sharedJVMSettings = Seq(
+    // Needed in order to publish for multiple Scala.js versions:
+    // https://github.com/olafurpg/sbt-ci-release#how-do-i-publish-cross-built-scalajs-projects
     skip.in(publish) := customScalaJSVersion.isDefined
   )
 

@@ -11,7 +11,7 @@ env:
 
 jobs:
   jvm-tests:
-    name: JVM (scala-${{ matrix.scala }}, jdk-${{ matrix.java }})
+    name: JVM (scala ${{ matrix.scala }}, jvm ${{ matrix.java }})
     strategy:
       fail-fast: true      
       matrix:
@@ -36,12 +36,12 @@ jobs:
           SBT_COMMAND: ${{ matrix.command }}
 
   js-tests:
-    name: JS (scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }})
+    name: JS (scala ${{ matrix.scala }}, scala.js ${{ matrix.scalajs }}, jvm ${{ matrix.java }})
     strategy:
       fail-fast: true      
       matrix:
         os: [ubuntu-20.04]
-        java: [adopt@1.11]
+        java: [11]
         scala: [2.12.11, 2.13.2]
         scalajs: [0.6.33, 1.1.0]
         command: [ci-js]
@@ -63,12 +63,12 @@ jobs:
           SBT_COMMAND: ${{ matrix.command }}
 
   package-tests:
-    name: Package (scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }})
+    name: Package (scala ${{ matrix.scala }}, scala.js ${{ matrix.scalajs }}, jvm ${{ matrix.java }})
     strategy:
       fail-fast: true      
       matrix:
         os: [ubuntu-20.04]
-        java: [adopt@1.11]
+        java: [11]
         scala: [2.12.11, 2.13.2]
         scalajs: [0.6.33, 1.1.0]
         command: [package]
@@ -90,12 +90,12 @@ jobs:
           SBT_COMMAND: ${{ matrix.command }}
 
   doc-tests:
-    name: Docs (scala-${{ matrix.scala }}, scalajs-${{ matrix.scalajs }}, jdk-${{ matrix.java }})
+    name: Docs (scala ${{ matrix.scala }}, scala.js ${{ matrix.scalajs }}, jvm ${{ matrix.java }})
     strategy:
       fail-fast: true
       matrix:
         os: [ubuntu-20.04]
-        java: [adopt@1.11]
+        java: [11]
         scala: [2.13.2]
         scalajs: [1.1.0]
         command: ["ci-doc"]
@@ -124,3 +124,64 @@ jobs:
           SCALA_VERSION: ${{ matrix.scala }}
           SCALAJS_VERSION: ${{ matrix.scalaJS }}
           SBT_COMMAND: ${{ matrix.command }}
+
+  publish_sonatype:
+    name: Publish to Sonatype
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [ jvm-tests, js-tests, package-tests, doc-tests ]
+    strategy:
+      fail-fast: true      
+      max-parallel: 1
+      matrix:
+        scalajs: ["", 0.6.33, 1.1.0]
+        command: [ci-release]
+
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v1
+      - uses: olafurpg/setup-scala@v2
+
+      - name: Install GnuPG2
+        run: |
+          sudo apt-get update && sudo apt-get -y install gnupg2
+          mkdir ~/.gnupg && chmod 700 ~/.gnupg
+          echo use-agent >> ~/.gnupg/gpg.conf
+          echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+          echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+          chmod 600 ~/.gnupg/*
+          echo RELOADAGENT | gpg-connect-agent
+          echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
+        env:
+          PGP_SECRET: ${{secrets.PGP_SECRET}}
+
+      - name: SCALAJS_VERSION=${{ matrix.scalajs }} sbt ci-release
+        run: csbt +clean ci-release
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SCALAJS_VERSION: ${{ matrix.scalaJS }}
+
+  publish_microsite:
+    name: Publish Website
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [ publish_sonatype ]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v1
+      - uses: olafurpg/setup-scala@v2
+
+      - name: Set up Ruby 2.6 (for microsite)
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 2.6.x
+
+      - name: Install microsite dependencies
+        run: |
+          bundle install --system --gemfile=site/Gemfile
+
+      - name: Publish Website
+        run: csbt +clean site/publishMicrosite
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

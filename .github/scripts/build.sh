@@ -22,4 +22,4 @@ if [[ -z "$SBT_COMMAND" ]]; then
     exit 1
 fi
 
-sbt -J-Xmx6144m ++$SCALA_VERSION $SBT_COMMAND
+csbt -J-Xmx6144m ++$SCALA_VERSION $SBT_COMMAND
