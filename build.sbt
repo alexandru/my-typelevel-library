@@ -31,11 +31,6 @@ val CatsVersion = "2.1.1"
   */
 val CatsEffectVersion = "2.1.3"
 
-/** Newtype (opaque type) definitions:
-  * [[https://github.com/estatico/scala-newtype]]
-  */
-val NewtypeVersion = "0.4.4"
-
 /** First-class support for type-classes:
   * [[https://github.com/typelevel/simulacrum]]
   */
@@ -105,15 +100,14 @@ lazy val sharedSettings = Seq(
 
   // More version specific compiler options
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, v)) if v <= 12 =>
-      Seq(
-        "-Ypartial-unification",
-      )
-    case _ =>
+    case Some((2, v)) if v >= 13 =>
       Seq(
         // Replaces macro-paradise in Scala 2.13
-        "-Ymacro-annotations",
+        // No
+        //"-Ymacro-annotations",
       )
+    case _ =>
+      Seq.empty
   }),
 
   // Turning off fatal warnings for doc generation
@@ -227,7 +221,6 @@ def defaultCrossProjectConfiguration(pr: CrossProject) = {
     .settings(requiredMacroCompatDeps(MacroParadiseVersion))
     .settings(filterOutMultipleDependenciesFromGeneratedPomXml(
       "groupId" -> "org.scoverage".r :: Nil,
-      "groupId" -> "io.estatico".r   :: "artifactId" -> "newtype".r    :: Nil,
       "groupId" -> "org.typelevel".r :: "artifactId" -> "simulacrum".r :: Nil,
     ))
 }
@@ -306,7 +299,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "my-typelevel-library-core",
     libraryDependencies ++= Seq(
-      "io.estatico"    %%% "newtype"          % NewtypeVersion % Provided,
       "org.typelevel"  %%% "simulacrum"       % SimulacrumVersion % Provided,
       "org.typelevel"  %%% "cats-core"        % CatsVersion,
       "org.typelevel"  %%% "cats-effect"      % CatsEffectVersion,

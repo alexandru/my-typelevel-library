@@ -18,11 +18,10 @@
 package my.typelevel.library
 
 import cats.implicits._
-import org.scalacheck.Prop
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.Checkers
 
- class ExampleSuite extends AnyFunSuite with Checkers {
+class ExampleSuite extends AnyFunSuite with Checkers {
 
   test("sample test") {
     val sum = Example.sumAll(List(1, 2, 3, 4))
