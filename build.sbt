@@ -7,6 +7,7 @@ import sbtcrossproject.CrossProject
 // ---------------------------------------------------------------------------
 // Commands
 
+
 /* We have no other way to target only JVM or JS projects in tests. */
 lazy val aggregatorIDs = Seq("core")
 
@@ -30,6 +31,11 @@ val CatsVersion = "2.1.1"
   */
 val CatsEffectVersion = "2.1.3"
 
+/** Newtype (opaque type) definitions:
+  * [[https://github.com/estatico/scala-newtype]]
+  */
+val NewtypeVersion = "0.4.4"
+
 /** First-class support for type-classes:
   * [[https://github.com/typelevel/simulacrum]]
   */
@@ -41,6 +47,7 @@ val SimulacrumVersion = "1.0.0"
 val MacroParadiseVersion = "2.1.1"
 
 /** Library for unit-testing:
+  * [[https://github.com/monix/minitest/]]
   *  - [[https://github.com/scalatest/scalatest]]
   *  - [[https://github.com/scalatest/scalatestplus-scalacheck/]]
   */
@@ -66,6 +73,11 @@ val BetterMonadicForVersion = "0.3.1"
   * [[https://github.com/ghik/silencer]]
   */
 val SilencerVersion = "1.7.0"
+
+/** Used for publishing the microsite:
+  * [[https://github.com/47degrees/github4s]]
+  */
+val GitHub4sVersion = "0.24.1"
 
 /**
   * Defines common plugins between all projects.
@@ -133,17 +145,6 @@ lazy val sharedSettings = Seq(
   logBuffered in Test := false,
   logBuffered in IntegrationTest := false,
 
-  /* Disables parallel execution
-   * ---------------------------
-   * Might be needed in case the tests use too many resources (CPU, memory)
-   * and the tests on top of CI end up failing because of that.
-   */
-  // parallelExecution in Test := false,
-  // parallelExecution in IntegrationTest := false,
-  // testForkedParallel in Test := false,
-  // testForkedParallel in IntegrationTest := false,
-  // concurrentRestrictions in Global += Tags.limit(Tags.Test, 1),
-
   // ---------------------------------------------------------------------------
   // Options meant for publishing on Maven Central
 
@@ -208,13 +209,13 @@ def defaultCrossProjectConfiguration(pr: CrossProject) = {
     },
     // Needed in order to publish for multiple Scala.js versions:
     // https://github.com/olafurpg/sbt-ci-release#how-do-i-publish-cross-built-scalajs-projects
-    skip.in(publish) := customScalaJSVersion.isEmpty
+    skip.in(publish) := customScalaJSVersion.isEmpty,
   )
 
   val sharedJVMSettings = Seq(
     // Needed in order to publish for multiple Scala.js versions:
     // https://github.com/olafurpg/sbt-ci-release#how-do-i-publish-cross-built-scalajs-projects
-    skip.in(publish) := customScalaJSVersion.isDefined
+    skip.in(publish) := customScalaJSVersion.isDefined,
   )
 
   pr.configure(defaultPlugins)
@@ -226,6 +227,7 @@ def defaultCrossProjectConfiguration(pr: CrossProject) = {
     .settings(requiredMacroCompatDeps(MacroParadiseVersion))
     .settings(filterOutMultipleDependenciesFromGeneratedPomXml(
       "groupId" -> "org.scoverage".r :: Nil,
+      "groupId" -> "io.estatico".r   :: "artifactId" -> "newtype".r    :: Nil,
       "groupId" -> "org.typelevel".r :: "artifactId" -> "simulacrum".r :: Nil,
     ))
 }
@@ -277,7 +279,7 @@ lazy val site = project.in(file("site"))
       micrositeCompilingDocsTool := WithMdoc,
       fork in mdoc := true,
       scalacOptions.in(Tut) ~= filterConsoleScalacOptions,
-      libraryDependencies += "com.47deg" %% "github4s" % "0.21.0",
+      libraryDependencies += "com.47deg" %% "github4s" % GitHub4sVersion,
       micrositePushSiteWith := GitHub4s,
       micrositeGithubToken := sys.env.get("GITHUB_TOKEN"),
       micrositeExtraMdFiles := Map(
@@ -304,6 +306,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "my-typelevel-library-core",
     libraryDependencies ++= Seq(
+      "io.estatico"    %%% "newtype"          % NewtypeVersion % Provided,
       "org.typelevel"  %%% "simulacrum"       % SimulacrumVersion % Provided,
       "org.typelevel"  %%% "cats-core"        % CatsVersion,
       "org.typelevel"  %%% "cats-effect"      % CatsEffectVersion,
@@ -313,7 +316,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
       "org.scalacheck"    %%% "scalacheck"       % ScalaCheckVersion % Test,
       "org.typelevel"     %%% "cats-laws"        % CatsVersion % Test,
       "org.typelevel"     %%% "cats-effect-laws" % CatsEffectVersion % Test,
-    )
+    ),
   )
 
 lazy val coreJVM = core.jvm

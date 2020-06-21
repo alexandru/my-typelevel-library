@@ -22,7 +22,7 @@ import org.scalacheck.Prop
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.scalacheck.Checkers
 
-class ExampleSuite extends AnyFunSuite with Checkers {
+ class ExampleSuite extends AnyFunSuite with Checkers {
 
   test("sample test") {
     val sum = Example.sumAll(List(1, 2, 3, 4))
@@ -31,8 +31,8 @@ class ExampleSuite extends AnyFunSuite with Checkers {
 
   // Property-based testing via ScalaCheck
   test("sum up any list") {
-    Prop.forAll { (l: List[Int]) =>
-      Example.sumAll(l) == l.sum + 1
+    check { (l: List[Int]) =>
+      Example.sumAll(l) == l.sum
     }
   }
 }
