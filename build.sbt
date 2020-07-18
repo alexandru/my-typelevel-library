@@ -29,7 +29,7 @@ val CatsVersion = "2.1.1"
 /** FP library for describing side-effects:
   * [[https://typelevel.org/cats-effect/]]
   */
-val CatsEffectVersion = "2.1.3"
+val CatsEffectVersion = "2.1.4"
 
 /** First-class support for type-classes:
   * [[https://github.com/typelevel/simulacrum]]
@@ -96,7 +96,7 @@ lazy val sharedSettings = Seq(
 
   organization := "org.alexn",
   scalaVersion := "2.13.3",
-  crossScalaVersions := Seq("2.12.11", "2.13.3"),
+  crossScalaVersions := Seq("2.12.12", "2.13.3"),
 
   // More version specific compiler options
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
