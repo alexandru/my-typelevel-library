@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 the My Typelevel Library contributors.
+ * Copyright (c) 2021 the My Typelevel Library contributors.
  * See the project homepage at: https://alexandru.github.io/my-typelevel-library/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
